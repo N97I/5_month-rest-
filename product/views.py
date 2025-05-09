@@ -9,6 +9,7 @@ from .serializers import (
     CategoryDetailSerializer, 
     ProductDetailSerializer, 
     ReviewDetailSerializer,
+    ProductReviewSerializer
 )
 
 @api_view(http_method_names=['GET'])
@@ -17,6 +18,7 @@ def category_list_api_view(request):
     categories = Category.objects.all()
     data = CategorySerializer(instance=categories, many=True).data
     return Response(data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 def category_detail_api_view(request, id):
@@ -54,8 +56,14 @@ def review_list_api_view(request):
 @api_view(['GET'])
 def review_detail_api_view(request, id):
     try:
-        review = Review.objects.get(id=id)
+        reviews = Review.objects.get(id=id)
     except Review.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-    data = ReviewDetailSerializer(review, many=False).data
+    data = ReviewDetailSerializer(reviews, many=False).data
     return Response(data=data)
+
+@api_view(['GET'])
+def product_review_list_api_view(request):
+    product_review = Product.objects.all()
+    data = ProductReviewSerializer(instance=product_review, many=True).data
+    return Response(data, status=status.HTTP_200_OK)

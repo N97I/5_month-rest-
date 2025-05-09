@@ -1,6 +1,13 @@
 from django.contrib import admin
 from .models import Category, Product, Review
 
+class ReviewInline(admin.StackedInline):
+    model = Review
+    extra = 0
+
+class ProductAdmin(admin.ModelAdmin):
+    inlines = [ReviewInline]
+
 admin.site.register(Category)
-admin.site.register(Product)
+admin.site.register(Product, ProductAdmin)
 admin.site.register(Review)
