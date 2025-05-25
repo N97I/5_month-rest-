@@ -1,3 +1,4 @@
+from typing import OrderedDict
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -15,7 +16,89 @@ from .serializers import (
     ReviewValidateSerializer
 )
 from django.db import transaction
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.viewsets import ModelViewSet
 
+
+class CategoryListCreateViewSet(ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    pagination_class = PageNumberPagination
+    lookup_field = 'id'
+
+    def post(self, request, *args, **kwargs):
+        serializer = CategoryValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        name = serializer.validated_data.get('name')
+
+        product = Category.objects.create(
+            name=name
+        )
+        return Response(status=status.HTTP_201_CREATED,
+                        data=CategorySerializer(product).data)
+
+
+
+
+class CustomPagination(PageNumberPagination):
+    def get_paginated_response(self, data):
+        return Response(OrderedDict([
+            ('total', self.page.paginator.count),
+            ('results', data)
+        ]))
+
+
+class ProductListCreateViewSet(ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    pagination_class = PageNumberPagination
+    lookup_field = 'id'
+
+    def post(self, request, *args, **kwargs):
+        serializer = ProductValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        title = serializer.validated_data.get('title')
+        description = serializer.validated_data.get('description')
+        price = serializer.validated_data.get('price')
+        category_id = serializer.validated_data.get('category_id')
+
+        with transaction.atomic():
+            product = Product.objects.create(
+                title=title,
+                description=description,
+                price=price,
+                category_id=category_id,
+
+        )
+        return Response(status=status.HTTP_201_CREATED,
+                    data=ProductSerializer(product).data)
+    
+class ReviewListCreateViewSet(ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    pagination_class = PageNumberPagination
+    lookup_field = 'id'
+
+    def post(self, request, *args, **kwargs):
+        serializer = ReviewValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        text = serializer.validated_data.get('text')
+        stars = serializer.validated_data.get('stars')
+        product_id = serializer.validated_data.get('product_id')
+        rating = serializer.validated_data.get('rating')
+
+        with transaction.atomic():
+            reviews = Review.objects.create(
+                text=text,
+                stars=stars,
+                product_id=product_id,
+                rating=rating
+        )
+        return Response(status=status.HTTP_201_CREATED,data=ReviewSerializer(reviews).data)
 
 @api_view(http_method_names=['GET', 'POST'])
 def category_list_create_api_view(request):
@@ -34,6 +117,7 @@ def category_list_create_api_view(request):
         )
         return Response(status=status.HTTP_201_CREATED,
                         data=CategorySerializer(product).data)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def category_detail_api_view(request, id):
